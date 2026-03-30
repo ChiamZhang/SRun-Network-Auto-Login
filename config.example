@@ -1,0 +1,19 @@
+# 复制本文件为 config 后填写（config 已在 .gitignore，勿提交到公开仓库）
+
+USERNAME="你的学号"
+PASSWORD="你的密码"
+ACID="xx"
+# 门户 ac_id：用浏览器完成一次校园网登录，看地址栏
+#   https://gw.buaa.edu.cn/srun_portal_pc?ac_id=??&...
+# 或开发者工具 Network 里请求的 ac_id=。无线与有线、不同区域可能不同，务必按自己环境填写。
+
+# ---------- 可选 ----------
+# protect-connect.sh 检测间隔（秒），不小于 60；不设则默认 3600
+PROTECT_INTERVAL="3600"
+
+# 若网关要求向 get_challenge 传固定本机 IP 再取消注释
+# IPADDR="10.x.x.x"
+
+# 临时覆盖 config 可用环境变量: BUAA_USERNAME BUAA_PASSWORD BUAA_ACID
+# BUAA_DEBUG=1  BUAA_DOUBLE_STACK=1  BUAA_THEME=buaa
+# 临时覆盖检测间隔: PROTECT_INTERVAL=1800 bash protect-connect.sh
