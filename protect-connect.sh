@@ -8,10 +8,13 @@ if [[ -f "$SCRIPT_DIR/config" ]]; then
 	source "$SCRIPT_DIR/config"
 fi
 INTERVAL="${_SAVED_PI:-${PROTECT_INTERVAL:-3600}}"
+SRUN_SCHEME="${SRUN_SCHEME:-https}"
+SRUN_HOST="${SRUN_HOST:-gw.buaa.edu.cn}"
+SRUN_RAD_USER_INFO_URL="${SRUN_RAD_USER_INFO_URL:-${SRUN_SCHEME}://${SRUN_HOST}/cgi-bin/rad_user_info}"
 
 is_offline() {
 	local out
-	out=$(curl -sS -k --noproxy '*' "https://gw.buaa.edu.cn/cgi-bin/rad_user_info" 2>/dev/null) || return 0
+	out=$(curl -sS -k --noproxy '*' "$SRUN_RAD_USER_INFO_URL" 2>/dev/null) || return 0
 	grep -q "not_online_error" <<< "$out"
 }
 

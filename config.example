@@ -11,9 +11,31 @@ ACID="xx"
 # protect-connect.sh 检测间隔（秒），不小于 60；不设则默认 3600
 PROTECT_INTERVAL="3600"
 
+# SRun 网关连接参数（用于适配 BUAA 以外系统）
+# 默认（BUAA）：
+# SRUN_SCHEME="https"
+# SRUN_HOST="gw.buaa.edu.cn"
+# SRUN_THEME="buaa"
+# SRUN_REF_URL="www.buaa.edu.cn"
+# SRUN_DOMAIN=""
+#
+# 若你的系统端点不同，可直接指定完整 URL（优先级更高）：
+# SRUN_LOGIN_PAGE_URL="https://portal.ucas.ac.cn/srun_portal_pc?ac_id=1&theme=pro"
+# SRUN_GET_CHALLENGE_URL="https://portal.ucas.ac.cn/cgi-bin/get_challenge"
+# SRUN_PORTAL_API_URL="https://portal.ucas.ac.cn/cgi-bin/srun_portal"
+# SRUN_RAD_USER_INFO_URL="https://portal.ucas.ac.cn/cgi-bin/rad_user_info"
+#
+# 或者只改 host + scheme，沿用默认路径：
+# SRUN_SCHEME="https"
+# SRUN_HOST="portal.ucas.ac.cn"
+# SRUN_THEME="pro"
+
 # 若网关要求向 get_challenge 传固定本机 IP 再取消注释
 # IPADDR="10.x.x.x"
 
 # 临时覆盖 config 可用环境变量: BUAA_USERNAME BUAA_PASSWORD BUAA_ACID
+# 也可在登录时传参临时指定 ACID（优先级更高）：
+#   bash login.sh login --acid 67
+#   bash login.sh login 67
 # BUAA_DEBUG=1  BUAA_DOUBLE_STACK=1  BUAA_THEME=buaa
 # 临时覆盖检测间隔: PROTECT_INTERVAL=1800 bash protect-connect.sh
