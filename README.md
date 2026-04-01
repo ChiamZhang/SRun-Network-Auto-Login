@@ -21,7 +21,8 @@
 
 必需：
 - `bash`、`curl`、`openssl`
-- `python3`（用于正确解析 `get_challenge` 的 JSONP 响应，避免旧式字符串截取导致假登录）
+
+**强烈推荐**安装 `python3`：供 `login.sh` 解析 `get_challenge` 的 JSONP；若无 `python3`，脚本会退回用 `cut` 截取字段，在大部分网关上仍可能登录成功，但**网关响应格式一变就容易错位或假登录**。
 
 **请使用 `bash login.sh` 或 `./login.sh` 运行，勿用 macOS 自带的 `sh`（多为 dash）。**
 
@@ -54,6 +55,23 @@ ACID="99"  # 门户登录窗口地址栏的 ac_id 参数值
 chmod +x login.sh try-connect.sh protect-connect.sh
 bash login.sh login
 ```
+
+### Windows（PowerShell）
+
+仓库内 [`windows/`](windows/) 提供与 `login.sh` / `try-connect.sh` / `protect-connect.sh` 等价的 PowerShell 脚本（无需 bash、无需 Python；需 **Windows 10+** 自带的 `curl.exe`）。
+
+1. 将根目录的 `config.example`（或 `config.ucas.example` / `config.bit.example`）复制为 **`windows\config`**（与脚本同目录；`config` 已在 `.gitignore`，勿提交）。
+2. 编辑 `windows\config`，填写 `USERNAME`、`PASSWORD`、`ACID` 等（格式与 bash 版相同：`KEY="值"`）。
+3. 在 **PowerShell** 中执行（若提示禁止运行脚本，可先执行 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` 或使用下方绕过方式）：
+
+```powershell
+cd windows
+powershell -ExecutionPolicy Bypass -File .\Login.ps1 login
+powershell -ExecutionPolicy Bypass -File .\Try-Connect.ps1
+powershell -ExecutionPolicy Bypass -File .\Protect-Connect.ps1
+```
+
+临时指定 ACID、调试等与 bash 版一致：`-Acid 67`、`$env:BUAA_DEBUG='1'`、`$env:BUAA_DOUBLE_STACK='1'` 等。
 
 ---
 
@@ -196,6 +214,10 @@ SRUN_RAD_USER_INFO_URL="https://portal.example.com/cgi-bin/rad_user_info"
 | `login.sh` | 核心脚本，支持 `login` / `logout` 命令，读取 `config` 中的凭证和 ACID 进行认证 |
 | `try-connect.sh` | 检测脚本：若网关判定未在线，自动调用 `login.sh login` 进行补登 |
 | `protect-connect.sh` | 守护脚本：后台定期检测（间隔可配），掉线时自动重新登录，适合长期挂机 |
+| `windows/Login.ps1` | Windows 下登录/注销（PowerShell + curl.exe） |
+| `windows/Try-Connect.ps1` | Windows 下按需补登 |
+| `windows/Protect-Connect.ps1` | Windows 下定时常驻保活 |
+| `scripts/test-without-python.sh` | 在排除 `python3` 的 PATH 下调用 `login.sh`，用于自测 `cut` 回退 |
 
 config 文件已列入 `.gitignore`，不会被提交到仓库，你的凭证信息保持本地私密。
 
