@@ -7,29 +7,11 @@
 #>
 $ErrorActionPreference = 'Stop'
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-
-function Read-BashConfig {
-    param([string] $Path)
-    $vars = @{}
-    if (-not (Test-Path -LiteralPath $Path)) { return $vars }
-    Get-Content -LiteralPath $Path -Encoding UTF8 | ForEach-Object {
-        $line = $_.Trim()
-        if ($line -match '^\s*#' -or $line -eq '') { return }
-        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\s*$') {
-            $k = $Matches[1]
-            $raw = $Matches[2].Trim()
-            if ($raw.Length -ge 2 -and $raw.StartsWith('"') -and $raw.EndsWith('"')) {
-                $raw = $raw.Substring(1, $raw.Length - 2)
-            }
-            $vars[$k] = $raw
-        }
-    }
-    return $vars
-}
+. (Join-Path $ScriptDir '_SRunCommon.ps1')
 
 $savedPi = $env:PROTECT_INTERVAL
 $cfgPath = Join-Path $ScriptDir 'config'
-$cfg = Read-BashConfig $cfgPath
+$cfg = Read-SrunBashConfig $cfgPath
 $INTERVAL = if ($null -ne $savedPi -and $savedPi -ne '') { $savedPi } elseif ($cfg['PROTECT_INTERVAL']) { $cfg['PROTECT_INTERVAL'] } else { '3600' }
 
 $SRUN_SCHEME = if ($cfg['SRUN_SCHEME']) { $cfg['SRUN_SCHEME'] } else { 'https' }

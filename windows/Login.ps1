@@ -8,47 +8,33 @@
   用法:
     .\Login.ps1 login
     .\Login.ps1 logout
-    .\Login.ps1 login -Acid 67
-    .\Login.ps1 help
+    .\Login.ps1 login --acid 67
+    .\Login.ps1 login -a 67
+    .\Login.ps1 login 67
+    .\Login.ps1 -Help
 #>
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('login', 'logout', 'help')]
     [string] $Command = 'login',
 
     [Parameter(Position = 1)]
-    [string] $AcidArg,
+    [string] $AcidPosition,
 
     [Alias('a')]
-    [string] $Acid
+    [string] $Acid,
+
+    [Alias('h')]
+    [switch] $Help,
+
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]] $Rest
 )
 
 $ErrorActionPreference = 'Stop'
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+. (Join-Path $ScriptDir '_SRunCommon.ps1')
 $ConfigPath = Join-Path $ScriptDir 'config'
-
-function Read-BashConfig {
-    param([string] $Path)
-    $vars = @{}
-    if (-not (Test-Path -LiteralPath $Path)) { return $vars }
-    Get-Content -LiteralPath $Path -Encoding UTF8 | ForEach-Object {
-        $line = $_.Trim()
-        if ($line -match '^\s*#' -or $line -eq '') { return }
-        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\s*$') {
-            $k = $Matches[1]
-            $raw = $Matches[2].Trim()
-            if ($raw.Length -ge 2 -and $raw.StartsWith('"') -and $raw.EndsWith('"')) {
-                $raw = $raw.Substring(1, $raw.Length - 2)
-            }
-            elseif ($raw.Length -ge 2 -and $raw.StartsWith("'") -and $raw.EndsWith("'")) {
-                $raw = $raw.Substring(1, $raw.Length - 2)
-            }
-            $vars[$k] = $raw
-        }
-    }
-    return $vars
-}
 
 function Parse-JsonpChallenge([string] $Raw) {
     $i = $Raw.IndexOf('(')
@@ -196,14 +182,17 @@ function ConvertTo-SrunB64([string] $Binary) {
 }
 
 
-# --- CLI: help ---
-if ($Command -eq 'help') {
+# --- CLI: help / 子命令校验 / ACID 参数（与 login.sh 对齐）---
+if ($Help -or $Command -in @('help', '-h', '--help')) {
     @'
 用法:
   .\Login.ps1 login
   .\Login.ps1 logout
-  .\Login.ps1 login -Acid 67
+  .\Login.ps1 login --acid 67
+  .\Login.ps1 login -a 67
+  .\Login.ps1 login --acid=67
   .\Login.ps1 login 67
+  .\Login.ps1 -Help
 
 配置: 将仓库内 config.example 复制为 windows\config 并填写 USERNAME、PASSWORD、ACID。
 环境变量可覆盖: BUAA_USERNAME, BUAA_PASSWORD, BUAA_ACID；调试: $env:BUAA_DEBUG='1'
@@ -211,11 +200,25 @@ if ($Command -eq 'help') {
     exit 0
 }
 
+if ($Command -notin @('login', 'logout')) {
+    Write-Error "未知命令: $Command。可用: login / logout / help（或 -Help / -h）"
+}
+
+$tailArgs = @()
+if ($AcidPosition) { $tailArgs += $AcidPosition }
+if ($Rest) { $tailArgs += $Rest }
+try {
+    $parsedTailAcid = Parse-SrunAcidTailArgs -Args $tailArgs
+} catch {
+    Write-Error $_.Exception.Message
+}
+$cliAcid = if ($Acid) { $Acid } elseif ($parsedTailAcid) { $parsedTailAcid } else { '' }
+
 if (-not (Test-Path -LiteralPath $ConfigPath)) {
     Write-Error "缺少 config。请将 config.example 复制为 windows\config 并填写。"
 }
 
-$cfg = Read-BashConfig $ConfigPath
+$cfg = Read-SrunBashConfig $ConfigPath
 
 function Cfg([string] $Key, [string] $Default = '') {
     if ($cfg.ContainsKey($Key) -and $null -ne $cfg[$Key]) { return [string]$cfg[$Key] }
@@ -225,7 +228,6 @@ function Cfg([string] $Key, [string] $Default = '') {
 $USERNAME = if ($env:BUAA_USERNAME) { $env:BUAA_USERNAME } else { Cfg 'USERNAME' }
 $PASSWORD = if ($env:BUAA_PASSWORD) { $env:BUAA_PASSWORD } else { Cfg 'PASSWORD' }
 
-$cliAcid = if ($Acid) { $Acid } elseif ($AcidArg) { $AcidArg } else { '' }
 $AC_ID = if ($cliAcid) { $cliAcid } elseif ($env:BUAA_ACID) { $env:BUAA_ACID } else { Cfg 'ACID' }
 
 $SRUN_SCHEME = if ($cfg['SRUN_SCHEME']) { $cfg['SRUN_SCHEME'] } else { 'https' }

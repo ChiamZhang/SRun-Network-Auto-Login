@@ -56,22 +56,43 @@ chmod +x login.sh try-connect.sh protect-connect.sh
 bash login.sh login
 ```
 
-### Windows（PowerShell）
+### Windows（PowerShell / cmd）
 
-仓库内 [`windows/`](windows/) 提供与 `login.sh` / `try-connect.sh` / `protect-connect.sh` 等价的 PowerShell 脚本（无需 bash、无需 Python；需 **Windows 10+** 自带的 `curl.exe`）。
+仓库内 [`windows/`](windows/) 提供与 bash 版**同一套能力**的脚本（无需 bash、无需 Python；需 **Windows 10+** 自带的 `curl.exe` 与 **PowerShell 5.1+**，通常随系统自带）。
 
-1. 将根目录的 `config.example`（或 `config.ucas.example` / `config.bit.example`）复制为 **`windows\config`**（与脚本同目录；`config` 已在 `.gitignore`，勿提交）。
-2. 编辑 `windows\config`，填写 `USERNAME`、`PASSWORD`、`ACID` 等（格式与 bash 版相同：`KEY="值"`）。
-3. 在 **PowerShell** 中执行（若提示禁止运行脚本，可先执行 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` 或使用下方绕过方式）：
+| 能力 | 脚本 | 说明 |
+|------|------|------|
+| 登录 / 注销 | `Login.ps1` | 与 `login.sh` 相同流程（JSONP、加密、Cookie） |
+| 按需补登 | `Try-Connect.ps1` | 调用 `rad_user_info`，未在线再调 `Login.ps1` |
+| 定时保活 | `Protect-Connect.ps1` | 间隔读 `PROTECT_INTERVAL`（环境变量优先于 config），默认 3600 秒 |
+
+**配置**：将根目录的 `config.example`（或 `config.ucas.example` / `config.bit.example`）复制为 **`windows\config`**（`config` 已在 `.gitignore`）。
+
+**PowerShell**（若提示无法运行脚本，可先 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`，或继续用下方 `-ExecutionPolicy Bypass`）：
 
 ```powershell
 cd windows
 powershell -ExecutionPolicy Bypass -File .\Login.ps1 login
+powershell -ExecutionPolicy Bypass -File .\Login.ps1 logout
+powershell -ExecutionPolicy Bypass -File .\Login.ps1 login --acid 67
 powershell -ExecutionPolicy Bypass -File .\Try-Connect.ps1
 powershell -ExecutionPolicy Bypass -File .\Protect-Connect.ps1
 ```
 
-临时指定 ACID、调试等与 bash 版一致：`-Acid 67`、`$env:BUAA_DEBUG='1'`、`$env:BUAA_DOUBLE_STACK='1'` 等。
+**与 `login.sh` 一致的 ACID 写法**：`--acid 67`、`-a 67`、`--acid=67`、位置参数 `login 67`；另支持 `-Acid`、`-Help` / `-h`。
+
+**cmd 启动器**（参数原样传给对应 `.ps1`，便于计划任务或双击测试）：
+
+```bat
+cd windows
+Login.cmd login --acid 67
+Try-Connect.cmd
+Protect-Connect.cmd
+```
+
+**环境变量**（PowerShell 会话内，与 bash 同名）：例如 `$env:BUAA_DEBUG='1'`、`$env:BUAA_DOUBLE_STACK='1'`、`$env:BUAA_ACID='67'`、`$env:BUAA_USERNAME='...'`；网关相关仍可用 `SRUN_HOST`、`SRUN_THEME`、`SRUN_*_URL` 等（与根目录 `config` / README 说明一致）。
+
+内部模块 [`windows/_SRunCommon.ps1`](windows/_SRunCommon.ps1) 仅供上述脚本点源（解析 bash 风格 `config`、解析 ACID 参数），**勿单独运行**。
 
 ---
 
@@ -214,9 +235,11 @@ SRUN_RAD_USER_INFO_URL="https://portal.example.com/cgi-bin/rad_user_info"
 | `login.sh` | 核心脚本，支持 `login` / `logout` 命令，读取 `config` 中的凭证和 ACID 进行认证 |
 | `try-connect.sh` | 检测脚本：若网关判定未在线，自动调用 `login.sh login` 进行补登 |
 | `protect-connect.sh` | 守护脚本：后台定期检测（间隔可配），掉线时自动重新登录，适合长期挂机 |
-| `windows/Login.ps1` | Windows 下登录/注销（PowerShell + curl.exe） |
+| `windows/Login.ps1` | Windows 下登录/注销（PowerShell + curl.exe，CLI 与 `login.sh` 对齐） |
 | `windows/Try-Connect.ps1` | Windows 下按需补登 |
 | `windows/Protect-Connect.ps1` | Windows 下定时常驻保活 |
+| `windows/_SRunCommon.ps1` | Windows 脚本共用：读 `config`、解析 `--acid` 等参数（点源用） |
+| `windows/*.cmd` | 从 cmd 调用对应 `.ps1`，便于计划任务 |
 | `scripts/test-without-python.sh` | 在排除 `python3` 的 PATH 下调用 `login.sh`，用于自测 `cut` 回退 |
 
 config 文件已列入 `.gitignore`，不会被提交到仓库，你的凭证信息保持本地私密。
