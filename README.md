@@ -10,16 +10,68 @@
 
 ## 稍微有点丑陋了这一版，后边还是把他封装的精致一点，现在是能跑了。 也有很多不懂代码的同学来问我怎么用，后边准备搞得更加易用一点。
 
+## Quick Start
+
+### 1. 修改配置文件 config.simple.example ,重命名为 config
+
+```shell
+# 从浏览器地址栏中的深澜认证成功页 URL 中提取以下字段，例如：
+#
+#    https://***.****.edu.cn/srun_portal_success?ac_id=1
+#    \--0--/\-------1-------/\--------2----------/?--3--/
+#
+# 对应关系：
+#    0 -> SRUN_SCHEME   协议（http / https）
+#    1 -> SRUN_HOST     认证服务器域名或 IP
+#    2 -> 无需填写      路径，通常固定为 /srun_portal_success
+#    3 -> ACID          ac_id 的数值（即 ?ac_id= 后面的数字）
+#
+# 安全提示：
+#    本文件含明文密码，请确保已被 .gitignore 排除，切勿提交到公开仓库。
+#
+
+USERNAME="你的学号"
+PASSWORD="你的密码"
+ACID="xx"  # No.3 处 ac_id=? 的数值，若 URL 中未携带可留空，一般可以自动推断，可登录失败后填写
+
+SRUN_SCHEME="https"  # No.0 处的协议：http 或 https # 经验：No.1 是纯数字 IP 时通常为 http，域名则一般 https
+SRUN_HOST="***.****.edu.cn" # No.1 是什么就填什么。
+
+# ---------- 可选保持联网，防止断网功能 ----------
+# protect-connect.sh 检测间隔（秒），不小于 60；不设则默认 3600
+# PROTECT_INTERVAL="3600"
+```
+
+### 2. 开始使用
+
+#### 打开命令行，授予可执行权限
+
+``chmod+x login.sh``
+``chmod+x protect_connect.sh``
+``chmod+x try_connect.sh``
+
+#### 双击或者在命令行输入文件 url 运行
+
+1. login.sh 默认正常登录
+2. protect_connect 根据 PROTECT_INTERVAL 这个值的间隔进行检测，如果断网会自动登录
+3. try_connect 检测是否登录，没有登录自动登录
+
+
+
+---
+
+
+
 ## Linux / macOS 和 Windows：先看这两件事
 
 两件事不一样：**配置文件放的路径不同**，**敲命令时当前文件夹不同**。下面按这个分开说，再用一张表把「同一功能」两边的命令对齐。
 
 ### 配置文件放在哪
 
-| 系统 | 把 `config` 放在哪 |
-|------|---------------------|
-| **Linux / macOS** | 仓库**根目录**（和 `login.sh` 同级） |
-| **Windows** | **`windows` 文件夹里**（和 `Login.ps1` 同级） |
+| 系统                    | 把`config` 放在哪                                     |
+| ----------------------- | ------------------------------------------------------- |
+| **Linux / macOS** | 仓库**根目录**（和 `login.sh` 同级）            |
+| **Windows**       | **`windows` 文件夹里**（和 `Login.ps1` 同级） |
 
 模板任选：`config.example`（北航）、`config.ucas.example`（国科大）、`config.bit.example`（北理工）。复制后**改名为 `config`**，编辑时至少填：
 
@@ -45,38 +97,38 @@ copy config.example windows\config
 
 ### 运行命令时在哪个目录
 
-| 系统 | 打开终端后要先 |
-|------|----------------|
-| **Linux / macOS** | `cd` 到仓库**根目录** |
-| **Windows** | `cd` 到 **`windows` 子文件夹** |
+| 系统                    | 打开终端后要先                           |
+| ----------------------- | ---------------------------------------- |
+| **Linux / macOS** | `cd` 到仓库**根目录**            |
+| **Windows**       | `cd` 到 **`windows` 子文件夹** |
 
 Linux / macOS 不要用 `sh` 跑，请用 **`bash login.sh`**。可选执行一次：`chmod +x login.sh try-connect.sh protect-connect.sh`。
 
 ### 依赖（各管各的）
 
-| 系统 | 需要 |
-|------|------|
+| 系统                    | 需要                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Linux / macOS** | `bash`、`curl`、`openssl`；`login.sh` 建议装 `python3`，**`login2.sh` 必须有 `python3`** |
-| **Windows** | **PowerShell 5.1+**、**curl.exe**（Win10 起一般自带）；**不用装 Python** |
+| **Windows**       | **PowerShell 5.1+**、**curl.exe**（Win10 起一般自带）；**不用装 Python**                   |
 
 ### 常用命令对照（同一行左 Linux / 右 Windows）
 
 以下：**左列在仓库根目录执行**；**右列先在 PowerShell 里 `cd windows` 再执行**。
 
-| 做什么 | Linux / macOS | Windows（PowerShell） |
-|--------|---------------|----------------------|
-| 登录 | `bash login.sh login` | `.\Login.ps1 login` |
-| 登录（`login2.sh`，自动抓 ACID） | `bash login2.sh login` | - |
-| 注销 | `bash login.sh logout` | `.\Login.ps1 logout` |
-| 临时改 ACID 再登录 | `bash login.sh login --acid 67` | `.\Login.ps1 login --acid 67` |
-| 未在线才登录 | `bash try-connect.sh` | `.\Try-Connect.ps1` |
-| 定时检查、掉线重登 | `bash protect-connect.sh` | `.\Protect-Connect.ps1` |
+| 做什么                             | Linux / macOS                     | Windows（PowerShell）           |
+| ---------------------------------- | --------------------------------- | ------------------------------- |
+| 登录                               | `bash login.sh login`           | `.\Login.ps1 login`           |
+| 登录（`login2.sh`，自动抓 ACID） | `bash login2.sh login`          | -                               |
+| 注销                               | `bash login.sh logout`          | `.\Login.ps1 logout`          |
+| 临时改 ACID 再登录                 | `bash login.sh login --acid 67` | `.\Login.ps1 login --acid 67` |
+| 未在线才登录                       | `bash try-connect.sh`           | `.\Try-Connect.ps1`           |
+| 定时检查、掉线重登                 | `bash protect-connect.sh`       | `.\Protect-Connect.ps1`       |
 
 ACID 参数在两边还支持 `-a`、`--acid=67`、位置参数 `login 67` 等，和 `login.sh` 一致。
 
 ### Windows 单独说明（执行策略、cmd、环境变量）
 
-**执行策略**：若提示无法运行脚本，在本机 PowerShell **执行一次**：`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`。  
+**执行策略**：若提示无法运行脚本，在本机 PowerShell **执行一次**：`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`。
 若不想改策略，也可以每次让系统 PowerShell 代跑（在任意目录）：`powershell -NoProfile -ExecutionPolicy Bypass -File "完整路径\windows\Login.ps1" login`。
 
 **cmd**：`windows` 目录下有 `Login.cmd`、`Try-Connect.cmd`、`Protect-Connect.cmd`，作用等于调用同名 `.ps1`（例如在 cmd 里：`cd windows` 后 `Login.cmd login`）。
@@ -137,15 +189,15 @@ Windows 上用前面说的 `$env:变量名 = '值'` 即可。
 
 ## 文件对照（找脚本时看一眼）
 
-| 文件 | 干啥 |
-|------|------|
-| `login.sh` | 登录 / 注销 |
-| `login2.sh` | 登录 / 注销（自动抓 ACID，依赖 python3） |
-| `try-connect.sh` | 未在线才登录 |
-| `protect-connect.sh` | 定时检查、掉线重登 |
-| `windows/Login.ps1` 等 | Windows 上同上 |
-| `windows/*.cmd` | 双击或 cmd 里快捷调用 `.ps1` |
-| `scripts/test-without-python.sh` | 测「没有 python3」时 `login.sh` 行为 |
+| 文件                               | 干啥                                     |
+| ---------------------------------- | ---------------------------------------- |
+| `login.sh`                       | 登录 / 注销                              |
+| `login2.sh`                      | 登录 / 注销（自动抓 ACID，依赖 python3） |
+| `try-connect.sh`                 | 未在线才登录                             |
+| `protect-connect.sh`             | 定时检查、掉线重登                       |
+| `windows/Login.ps1` 等           | Windows 上同上                           |
+| `windows/*.cmd`                  | 双击或 cmd 里快捷调用`.ps1`            |
+| `scripts/test-without-python.sh` | 测「没有 python3」时`login.sh` 行为    |
 
 ---
 

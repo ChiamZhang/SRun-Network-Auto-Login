@@ -1,0 +1,25 @@
+# 从浏览器地址栏中的深澜认证成功页 URL 中提取以下字段，例如：
+#
+#    https://***.****.edu.cn/srun_portal_success?ac_id=1
+#    \--0--/\-------1-------/\--------2----------/?--3--/
+#
+# 对应关系：
+#    0 -> SRUN_SCHEME   协议（http / https）
+#    1 -> SRUN_HOST     认证服务器域名或 IP
+#    2 -> 无需填写      路径，通常固定为 /srun_portal_success
+#    3 -> ACID          ac_id 的数值（即 ?ac_id= 后面的数字）
+#
+# 安全提示：
+#    本文件含明文密码，请确保已被 .gitignore 排除，切勿提交到公开仓库。
+#
+
+USERNAME="你的学号"
+PASSWORD="你的密码"
+ACID="xx"  # No.3 处 ac_id=? 的数值，若 URL 中未携带可留空，一般可以自动推断，可登录失败后填写
+
+SRUN_SCHEME="https"  # No.0 处的协议：http 或 https # 经验：No.1 是纯数字 IP 时通常为 http，域名则一般 https
+SRUN_HOST="***.****.edu.cn" # No.1 是什么就填什么。
+
+# ---------- 可选保持联网，防止断网功能 ----------
+# protect-connect.sh 检测间隔（秒），不小于 60；不设则默认 3600
+# PROTECT_INTERVAL="3600"

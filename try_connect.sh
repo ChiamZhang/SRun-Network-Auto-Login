@@ -67,7 +67,7 @@ if ! grep -q "not_online_error" <<< "$online"; then
 fi
 
 if [[ -n "$CLI_ACID" ]]; then
-	exec bash "$SCRIPT_DIR/login.sh" login --acid "$CLI_ACID"
+	exec bash "$SCRIPT_DIR/login2.sh" login --acid "$CLI_ACID"
 else
-	exec bash "$SCRIPT_DIR/login.sh" login
+	exec bash "$SCRIPT_DIR/login2.sh" login
 fi
